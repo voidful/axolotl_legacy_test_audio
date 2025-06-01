@@ -149,41 +149,48 @@ class ProcessingStrategy:
                     audio_key = key
                     break
             if audio_key is not None:
-                if len(processed_example[audio_key]) > 0:
-                    LOG.warning(
-                        f"Found {len(processed_example[audio_key])} audios in a sample. Using the first one."
-                        "If you are using a dataset with multiple audios per sample, please convert it to use multi-content Messages."
-                    )
-                audio_value = processed_example[audio_key][0]
-                waveform = None
-                sampling_rate = 16000
-                if isinstance(audio_value, dict):
-                    waveform = audio_value.get("array")
-                    sampling_rate = audio_value.get("sampling_rate", 16000)
-                elif isinstance(audio_value, np.ndarray):
-                    waveform = audio_value
-                elif isinstance(audio_value, str):
-                    waveform, sampling_rate = sf.read(audio_value)
-                elif isinstance(audio_value, bytes):
-                    waveform, sampling_rate = sf.read(io.BytesIO(audio_value))
+                audio_field = processed_example[audio_key]
+                # 保證 audio_field 一定為 list
+                if not isinstance(audio_field, list):
+                    audio_field = [audio_field]
+                if len(audio_field) == 0:
+                    LOG.warning(f"No audios found in {audio_key} of sample, skipping.")
                 else:
-                    raise ValueError(f"Unknown audio format: {type(audio_value)}")
-
-                ind_to_add = None
-                for i, content in enumerate(processed_example["messages"][0]["content"]):
-                    if content["type"] == "audio" and "audio" not in content:
-                        ind_to_add = i
-                        break
-
-                audio_content = {
-                    "type": "audio",
-                    "audio": waveform,
-                    "sampling_rate": sampling_rate,
-                }
-                if ind_to_add is not None:
-                    processed_example["messages"][0]["content"][ind_to_add].update(audio_content)
-                else:
-                    processed_example["messages"][0]["content"].append(audio_content)
+                    if len(audio_field) > 1:
+                        LOG.warning(
+                            f"Found {len(audio_field)} audios in a sample. Using the first one."
+                            "If you are using a dataset with multiple audios per sample, please convert it to use multi-content Messages."
+                        )
+                    audio_value = audio_field[0]
+                    waveform = None
+                    sampling_rate = 16000
+                    if isinstance(audio_value, dict):
+                        waveform = audio_value.get("array")
+                        sampling_rate = audio_value.get("sampling_rate", 16000)
+                    elif isinstance(audio_value, np.ndarray):
+                        waveform = audio_value
+                    elif isinstance(audio_value, str):
+                        waveform, sampling_rate = sf.read(audio_value)
+                    elif isinstance(audio_value, bytes):
+                        waveform, sampling_rate = sf.read(io.BytesIO(audio_value))
+                    else:
+                        raise ValueError(f"Unknown audio format: {type(audio_value)}")
+        
+                    ind_to_add = None
+                    for i, content in enumerate(processed_example["messages"][0]["content"]):
+                        if content["type"] == "audio" and "audio" not in content:
+                            ind_to_add = i
+                            break
+        
+                    audio_content = {
+                        "type": "audio",
+                        "audio": waveform,
+                        "sampling_rate": sampling_rate,
+                    }
+                    if ind_to_add is not None:
+                        processed_example["messages"][0]["content"][ind_to_add].update(audio_content)
+                    else:
+                        processed_example["messages"][0]["content"].append(audio_content)
 
             processed_examples.append(processed_example)
         return processed_examples
