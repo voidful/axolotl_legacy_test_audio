@@ -75,7 +75,7 @@ class ChatTemplatePrompter(Prompter):
     def chat_template_msg_variables(self) -> Set[str]:
         return self._chat_template_msg_variables
 
-    def build_prompt(self, conversation, add_generation_prompt=False, images=None):
+    def build_prompt(self, conversation, add_generation_prompt=False, images=None, audios=None):
         if self.processor:
             if not callable(self.processor):
                 raise TypeError("Processor must be callable")
@@ -89,11 +89,12 @@ class ChatTemplatePrompter(Prompter):
             batch = self.processor(
                 text=text,
                 images=images,
+                audios=audios,
                 return_tensors="pt",
             )
             # workaround since processor works in batches instead of single examples
             for k, val in batch.items():
-                if k in ["pixel_values"]:
+                if k in ["pixel_values", "input_audio_embeds"]:
                     batch[k] = val.tolist()
                 else:
                     batch[k] = val.squeeze().tolist()
@@ -213,6 +214,12 @@ class ChatTemplatePrompter(Prompter):
         template_analyzer = JinjaTemplateAnalyzer(chat_template)
         return template_analyzer.get_message_vars(field_messages)
 
+    def get_images(self, prompt):
+        return prompt.get(self.images, None)
+
+    def get_audios(self, prompt):
+        return prompt.get("audios", None)
+
 
 class ChatTemplateStrategy(PromptTokenizingStrategy):
     """
@@ -252,6 +259,7 @@ class ChatTemplateStrategy(PromptTokenizingStrategy):
         self.split_thinking = split_thinking
 
         self.images = "images"
+        self.audios = "audios"
 
         LOG.debug(
             f"The chat template uses the following properites on the message: {self.prompter.chat_template_msg_variables}"
@@ -373,13 +381,15 @@ class ChatTemplateStrategy(PromptTokenizingStrategy):
         ):
             turns = self.get_conversation_thread(prompt)
             images = self.get_images(prompt)
+            audios = self.get_audios(prompt)
             prompt_ids = self.prompter.build_prompt(  # type: ignore
                 turns[:-1],
                 add_generation_prompt=True,
                 images=images,
+                audios=audios,
             )
             tokenized_res = self.prompter.build_prompt(
-                turns, images=images
+                turns, images=images, audios=audios
             )  # type: ignore
             tokenized_prompt = {}
             if isinstance(tokenized_res, list):
@@ -736,6 +746,9 @@ class ChatTemplateStrategy(PromptTokenizingStrategy):
 
     def get_images(self, prompt):
         return prompt.get(self.images, None)
+
+    def get_audios(self, prompt):
+        return prompt.get("audios", None)
 
 
 class StrategyLoader:
