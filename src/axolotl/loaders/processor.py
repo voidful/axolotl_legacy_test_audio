@@ -22,7 +22,7 @@ def load_processor(cfg: DictDefault, tokenizer: PreTrainedTokenizerBase):
         processor_cls = getattr(transformers, cfg.processor_type)
 
     processor = processor_cls.from_pretrained(
-        cfg.processor_config,
+        "voidful/gemma-3-omni-27b-it",
         trust_remote_code=cfg.trust_remote_code or False,
         tokenizer=tokenizer,
         **processor_kwargs,
