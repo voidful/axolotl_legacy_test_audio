@@ -452,7 +452,7 @@ class HFCausalTrainerBuilder(TrainerBuilderBase):
             else:
                 collator = BatchSamplerDataCollatorForSeq2Seq
         else:
-            if self.cfg.processor_type and self.processor:
+            if (self.cfg.processor_type and self.processor) or "omni" in self.cfg.base_model:
                 collator = MultiModalChatDataCollator
                 kwargs["processing_strategy"] = get_processing_strategy(
                     self.processor,
