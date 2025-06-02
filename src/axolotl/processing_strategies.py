@@ -228,6 +228,7 @@ class Gemma3ProcessingStrategy(ProcessingStrategy):
         super().__init__(processor, chat_template, image_size, image_resize_algorithm)
         if processor is None:
            processor = AutoProcessor.from_pretrained("voidful/gemma-3-omni-27b-it",trust_remote_code=True) 
+           self.processor = processor
         self.image_token = processor.tokenizer.special_tokens_map["boi_token"]
         self.image_token_id = processor.tokenizer.convert_tokens_to_ids(self.image_token)
 
