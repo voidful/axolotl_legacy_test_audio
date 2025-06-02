@@ -10,7 +10,7 @@ import soundfile as sf
 import io
 from datasets import Audio
 
-from transformers import ProcessorMixin
+from transformers import ProcessorMixin,AutoProcessor
 from transformers.image_utils import load_image
 
 from axolotl.utils.logging import get_logger
