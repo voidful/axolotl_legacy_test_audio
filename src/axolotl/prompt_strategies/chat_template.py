@@ -79,32 +79,38 @@ class ChatTemplatePrompter(Prompter):
         if self.processor:
             if not callable(self.processor):
                 raise TypeError("Processor must be callable")
-
+    
+            # 傳遞 images/audios 進 template
             text = self.processor.apply_chat_template(
                 conversation,
                 chat_template=self.chat_template,
                 tokenize=False,
                 add_generation_prompt=add_generation_prompt,
+                images=images,
+                audios=audios,
             )
+            # 同步傳遞進 processor，支援 batch multimodal
             batch = self.processor(
                 text=text,
                 images=images,
                 audios=audios,
                 return_tensors="pt",
             )
-            # workaround since processor works in batches instead of single examples
+            # workaround: 將 tensor 轉 list，方便 downstream SFT 流程
             for k, val in batch.items():
                 if k in ["pixel_values", "input_audio_embeds"]:
                     batch[k] = val.tolist()
                 else:
                     batch[k] = val.squeeze().tolist()
             return batch
-
+    
+        # 如果沒 processor，就是純 tokenizer 路徑
         return self.tokenizer.apply_chat_template(
             conversation,
             add_generation_prompt=add_generation_prompt,
             chat_template=self.chat_template,
         )
+
 
     def get_offsets_for_train_detail(
         self, text: str, train_details: List[Dict], mask_untrainable: bool = True
