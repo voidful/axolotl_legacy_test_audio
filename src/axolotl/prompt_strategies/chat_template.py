@@ -355,7 +355,6 @@ class ChatTemplateStrategy(PromptTokenizingStrategy):
         """
         Public method that can handle either a single prompt or a batch of prompts.
         """
-        print("tokenize_prompt",prompt)
         if not self.is_prompt_batched(prompt) or not self.supports_batched:
             return self._tokenize_single_prompt(prompt)
 
@@ -377,7 +376,6 @@ class ChatTemplateStrategy(PromptTokenizingStrategy):
         return dict(res)
 
     def _tokenize_single_prompt(self, prompt: dict) -> Dict[str, List[int]]:
-        print("_tokenize_single_prompt",prompt)
         # Old simple legacy behavior that works reliably.
         if (
             not self.roles_to_train
@@ -759,7 +757,10 @@ class ChatTemplateStrategy(PromptTokenizingStrategy):
         return prompt.get(self.images, None)
 
     def get_audios(self, prompt):
-        return prompt.get("audios", None)
+        if "audios" in prompt:
+            return prompt.get("audios", None)
+        else:
+            return prompt.get("audio", None)
 
 
 class StrategyLoader:
