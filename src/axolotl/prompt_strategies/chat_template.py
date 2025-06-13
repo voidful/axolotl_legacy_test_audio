@@ -377,6 +377,7 @@ class ChatTemplateStrategy(PromptTokenizingStrategy):
         return dict(res)
 
     def _tokenize_single_prompt(self, prompt: dict) -> Dict[str, List[int]]:
+        print("_tokenize_single_prompt",prompt)
         # Old simple legacy behavior that works reliably.
         if (
             not self.roles_to_train
