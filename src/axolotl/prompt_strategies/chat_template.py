@@ -82,7 +82,7 @@ class ChatTemplatePrompter(Prompter):
     
             # 傳遞 images/audios 進 template
             text = self.processor.apply_chat_template(
-                conversation,
+                {"images":images,"audios",audios,"messages": conversation},
                 chat_template=self.chat_template,
                 tokenize=False,
                 add_generation_prompt=add_generation_prompt,
@@ -417,7 +417,11 @@ class ChatTemplateStrategy(PromptTokenizingStrategy):
             return tokenized_prompt
 
         turns = self.get_conversation_thread(prompt)
-        input_ids = self.prompter.build_prompt(turns)  # type: ignore
+        images = self.get_images(prompt)
+        audios = self.get_audios(prompt)
+        input_ids = self.prompter.build_prompt(turns,
+                                               images=images,
+                                               audios=audios,)  # type: ignore
         labels = [IGNORE_TOKEN_ID] * len(input_ids)
 
         last_eos_idx = -1
