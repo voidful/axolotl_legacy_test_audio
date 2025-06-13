@@ -82,7 +82,7 @@ class ChatTemplatePrompter(Prompter):
     
             # 傳遞 images/audios 進 template
             text = self.processor.apply_chat_template(
-                {"images":images,"audios",audios,"messages": conversation},
+                {"images":images,"audios":audios,"messages": conversation},
                 chat_template=self.chat_template,
                 tokenize=False,
                 add_generation_prompt=add_generation_prompt,
